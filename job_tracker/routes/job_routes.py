@@ -197,8 +197,7 @@ def view_job(job_id):
         Rendered template with job, notes, and contacts
     """
     # Get job by ID and process its parsed data in one step
-    if not (job := Job.query.get_or_404(job_id)):
-        return redirect(url_for('main.index'))
+    job = Job.query.get_or_404(job_id)
         
     # Get related data
     notes, contacts = _get_job_related_data(job_id)
