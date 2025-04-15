@@ -6,7 +6,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>{{ current_status }} Jobs</h1>
     <div>
-        <a href="{{ url_for('job_routes.add_job') }}" class="btn btn-primary">
+        <a href="{{ url_for('job.add_job') }}" class="btn btn-primary">
             <i class="fas fa-plus me-1"></i> Add Job
         </a>
     </div>
@@ -17,35 +17,35 @@
         <ul class="nav nav-pills">
             <li class="nav-item">
                 <a class="nav-link {% if current_status == 'All' %}active{% endif %}" 
-                   href="{{ url_for('job_routes.list_jobs', status='All') }}">All</a>
+                   href="{{ url_for('job.list_jobs', status='All') }}">All</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {% if current_status == 'Saved' %}active{% endif %}" 
-                   href="{{ url_for('job_routes.list_jobs', status='Saved') }}">Saved</a>
+                   href="{{ url_for('job.list_jobs', status='Saved') }}">Saved</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {% if current_status == 'Applied' %}active{% endif %}" 
-                   href="{{ url_for('job_routes.list_jobs', status='Applied') }}">Applied</a>
+                   href="{{ url_for('job.list_jobs', status='Applied') }}">Applied</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {% if current_status == 'Phone Interview' %}active{% endif %}" 
-                   href="{{ url_for('job_routes.list_jobs', status='Phone Interview') }}">Phone Interview</a>
+                   href="{{ url_for('job.list_jobs', status='Phone Interview') }}">Phone Interview</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {% if current_status == 'Technical Interview' %}active{% endif %}" 
-                   href="{{ url_for('job_routes.list_jobs', status='Technical Interview') }}">Technical Interview</a>
+                   href="{{ url_for('job.list_jobs', status='Technical Interview') }}">Technical Interview</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {% if current_status == 'Onsite Interview' %}active{% endif %}" 
-                   href="{{ url_for('job_routes.list_jobs', status='Onsite Interview') }}">Onsite Interview</a>
+                   href="{{ url_for('job.list_jobs', status='Onsite Interview') }}">Onsite Interview</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {% if current_status == 'Offer' %}active{% endif %}" 
-                   href="{{ url_for('job_routes.list_jobs', status='Offer') }}">Offer</a>
+                   href="{{ url_for('job.list_jobs', status='Offer') }}">Offer</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {% if current_status == 'Rejected' %}active{% endif %}" 
-                   href="{{ url_for('job_routes.list_jobs', status='Rejected') }}">Rejected</a>
+                   href="{{ url_for('job.list_jobs', status='Rejected') }}">Rejected</a>
             </li>
         </ul>
     </div>
@@ -142,7 +142,7 @@
         {% else %}
             <div class="text-center p-5">
                 <p class="text-muted mb-3">No jobs found in this category</p>
-                <a href="{{ url_for('job_routes.add_job') }}" class="btn btn-primary">
+                <a href="{{ url_for('job.add_job') }}" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i> Add Job
                 </a>
             </div>

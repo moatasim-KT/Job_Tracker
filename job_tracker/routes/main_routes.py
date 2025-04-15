@@ -6,14 +6,14 @@ from flask import Blueprint, render_template, json, redirect, url_for
 from job_tracker.models import Job
 from job_tracker import db
 
-main_bp = Blueprint('main', __name__)
+main = Blueprint('main', __name__)
 
-@main_bp.route('/')
+@main.route('/')
 def index():
     """Home page route that redirects to the dashboard."""
     return redirect(url_for('main.dashboard'))
 
-@main_bp.route('/dashboard')
+@main.route('/dashboard')
 def dashboard():
     """Dashboard with statistics and overview."""
     total_jobs = Job.query.count()
