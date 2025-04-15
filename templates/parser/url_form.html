@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Job from URL - Job Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+            <h1 class="mt-2">Add Job from URL</h1>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form action="{{ url_for('parser.parse_url') }}" method="post">
+                        <div class="mb-4">
+                            <label for="job_url" class="form-label">LinkedIn Job URL <span class="text-danger">*</span></label>
+                            <input type="url" class="form-control" id="job_url" name="job_url" 
+                                placeholder="https://www.linkedin.com/jobs/view/..." required>
+                            <div class="form-text">Paste the full LinkedIn job posting URL</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i> Extract Job Details
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Other Import Options</h5>
+                </div>
+                <div class="card-body">
+                    <p>You can also add jobs by:</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('parser.parse_text') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-clipboard me-1"></i> Paste Job Description
+                        </a>
+                        <a href="{{ url_for('job.add_job') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-keyboard me-1"></i> Manual Entry
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">How It Works</h5>
+                </div>
+                <div class="card-body">
+                    <ol class="mb-0">
+                        <li>Copy the URL from a LinkedIn job posting</li>
+                        <li>Paste it in the form</li>
+                        <li>Our system will extract job information automatically</li>
+                        <li>Review and confirm the extracted details</li>
+                        <li>The job will be added to your tracker</li>
+                    </ol>
+                    <hr>
+                    <div class="alert alert-info mb-0 mt-3">
+                        <i class="fas fa-info-circle me-1"></i> URL extraction works best with public LinkedIn job postings.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

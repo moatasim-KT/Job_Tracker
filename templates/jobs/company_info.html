@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ job.company }} - Company Information{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('job.view_job', job_id=job.id) }}">{{ job.title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Company Info</li>
+        </ol>
+    </nav>
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>{{ job.company }}</h1>
+            <p class="text-muted">{{ job.title }} • {{ job.location }}</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('job.view_job', job_id=job.id) }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Job
+            </a>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs" id="companyTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="company-profile-tab" data-bs-toggle="tab" data-bs-target="#company-profile" 
+                    type="button" role="tab" aria-controls="company-profile" aria-selected="true">
+                Company Profile
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" 
+                    type="button" role="tab" aria-controls="reviews" aria-selected="false">
+                Employee Reviews
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="sources-tab" data-bs-toggle="tab" data-bs-target="#sources" 
+                    type="button" role="tab" aria-controls="sources" aria-selected="false">
+                Information Sources
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content border border-top-0 rounded-bottom p-4 bg-white" id="companyTabsContent">
+        <!-- Company Profile Tab -->
+        <div class="tab-pane fade show active" id="company-profile" role="tabpanel" aria-labelledby="company-profile-tab">
+            {% if company_data and company_data.get('consolidated_info') %}
+                {% set info = company_data.get('consolidated_info', {}) %}
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h3 class="card-title m-0">Company Overview</h3>
+                            </div>
+                            <div class="card-body">
+                                <p class="lead">{{ info.get('company_description', 'No description available.') }}</p>
+                                
+                                {% if info.get('mission_values') %}
+                                    <h4 class="mt-4">Mission & Values</h4>
+                                    <ul class="list-group list-group-flush">
+                                        {% for item in info.get('mission_values', []) %}
+                                            <li class="list-group-item">{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if info.get('products_services') %}
+                            <div class="card mb-4">
+                                <div class="card-header bg-info text-white">
+                                    <h3 class="card-title m-0">Products & Services</h3>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        {% for item in info.get('products_services', []) %}
+                                            <li class="list-group-item">{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-header bg-secondary text-white">
+                                <h3 class="card-title m-0">Company Details</h3>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <strong>Industry:</strong> <span>{{ info.get('industry', 'Unknown') }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <strong>Founded:</strong> <span>{{ info.get('founded', 'Unknown') }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <strong>Size:</strong> <span>{{ info.get('company_size', 'Unknown') }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <strong>Headquarters:</strong> <span>{{ info.get('headquarters', 'Unknown') }}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {% if company_source %}
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h3 class="card-title m-0">Company Links</h3>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        {% if company_source.website_url %}
+                                            <li class="list-group-item">
+                                                <a href="{{ company_source.website_url }}" target="_blank" class="d-flex align-items-center">
+                                                    <i class="bi bi-globe me-2"></i> Company Website
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                        {% if company_source.linkedin_url %}
+                                            <li class="list-group-item">
+                                                <a href="{{ company_source.linkedin_url }}" target="_blank" class="d-flex align-items-center">
+                                                    <i class="bi bi-linkedin me-2"></i> LinkedIn
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                        {% if company_source.glassdoor_url %}
+                                            <li class="list-group-item">
+                                                <a href="{{ company_source.glassdoor_url }}" target="_blank" class="d-flex align-items-center">
+                                                    <i class="bi bi-star-fill me-2"></i> Glassdoor
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <h4 class="alert-heading">No Company Information Available</h4>
+                    <p>We don't have any information about this company yet. Add company sources below to fetch details.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Reviews Tab -->
+        <div class="tab-pane fade" id="reviews" role="tabpanel" aria-labelledby="reviews-tab">
+            {% if company_reviews and company_reviews.get('structured_reviews') %}
+                {% set reviews = company_reviews.get('structured_reviews', {}) %}
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h3 class="card-title m-0">Overall Assessment</h3>
+                            </div>
+                            <div class="card-body">
+                                <p class="lead">{{ reviews.get('overall_assessment', 'No assessment available.') }}</p>
+                                <p class="mt-3"><strong>Bottom Line:</strong> {{ reviews.get('bottom_line', '') }}</p>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header bg-success text-white">
+                                        <h3 class="card-title m-0">Key Strengths</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if reviews.get('key_strengths') %}
+                                            <ul class="list-group list-group-flush">
+                                                {% for strength in reviews.get('key_strengths', []) %}
+                                                    <li class="list-group-item">
+                                                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                        {{ strength }}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <p class="text-muted">No key strengths available.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header bg-danger text-white">
+                                        <h3 class="card-title m-0">Areas for Improvement</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if reviews.get('areas_for_improvement') %}
+                                            <ul class="list-group list-group-flush">
+                                                {% for area in reviews.get('areas_for_improvement', []) %}
+                                                    <li class="list-group-item">
+                                                        <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+                                                        {{ area }}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <p class="text-muted">No areas for improvement available.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h3 class="card-title m-0">Culture Ratings</h3>
+                            </div>
+                            <div class="card-body">
+                                {% if reviews.get('culture_highlights') %}
+                                    {% set culture = reviews.get('culture_highlights', {}) %}
+                                    <ul class="list-group list-group-flush">
+                                        {% for key, value in culture.items() %}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span>{{ key|replace('_', ' ')|title }}</span>
+                                                <div class="rating">
+                                                    {% for i in range(5) %}
+                                                        {% if i < value|int %}
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                        {% elif (i + 0.5) < value %}
+                                                            <i class="bi bi-star-half text-warning"></i>
+                                                        {% else %}
+                                                            <i class="bi bi-star text-warning"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    <strong class="ms-2">{{ value }}</strong>
+                                                </div>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="text-muted">No culture ratings available.</p>
+                                {% endif %}
+                                
+                                {% if company_reviews.get('overall_rating') %}
+                                    <div class="text-center mt-3">
+                                        <div class="display-4 fw-bold">{{ company_reviews.get('overall_rating') }}</div>
+                                        <div class="text-muted">Overall Rating</div>
+                                        <div class="small text-muted">Based on {{ company_reviews.get('review_count', 0) }} reviews</div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <h4 class="alert-heading">No Company Reviews Available</h4>
+                    <p>We don't have any employee reviews for this company yet. Add a Glassdoor source below to fetch reviews.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sources Tab -->
+        <div class="tab-pane fade" id="sources" role="tabpanel" aria-labelledby="sources-tab">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title m-0">Update Company Information Sources</h3>
+                </div>
+                <div class="card-body">
+                    <p class="mb-4">
+                        Enter URLs to company information sources to fetch and structure information about {{ job.company }}.
+                        We'll use these sources to build a comprehensive company profile and summary of employee reviews.
+                    </p>
+                    
+                    <form action="{{ url_for('company.update_company_info', job_id=job.id) }}" method="POST">
+                        <div class="mb-4">
+                            <button type="submit" class="btn btn-primary" name="auto_discover" value="true">
+                                <i class="bi bi-magic"></i> Auto-Discover Company URLs
+                            </button>
+                            <span class="ms-2 text-muted">Let us automatically find the company website, LinkedIn profile, and Glassdoor reviews</span>
+                        </div>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label for="website_url" class="form-label">Company Website</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-globe"></i></span>
+                                    <input type="url" class="form-control" id="website_url" name="website_url"
+                                           placeholder="https://company.com" 
+                                           value="{{ company_source.website_url if company_source else '' }}">
+                                </div>
+                                <div class="form-text">Official company website</div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="linkedin_url" class="form-label">LinkedIn URL</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-linkedin"></i></span>
+                                    <input type="url" class="form-control" id="linkedin_url" name="linkedin_url"
+                                           placeholder="https://linkedin.com/company/..." 
+                                           value="{{ company_source.linkedin_url if company_source else '' }}">
+                                </div>
+                                <div class="form-text">Company's LinkedIn profile page</div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="glassdoor_url" class="form-label">Glassdoor URL</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-star-fill"></i></span>
+                                    <input type="url" class="form-control" id="glassdoor_url" name="glassdoor_url"
+                                           placeholder="https://glassdoor.com/..." 
+                                           value="{{ company_source.glassdoor_url if company_source else '' }}">
+                                </div>
+                                <div class="form-text">Company's Glassdoor reviews page</div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-arrow-repeat"></i> Update Information
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            {% if company_data %}
+                <div class="card mt-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h3 class="card-title m-0">Data Sources</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">The current company information was collected from the following sources:</p>
+                        
+                        <ul class="list-group">
+                            {% for source in company_data.get('metadata', {}).get('sources', []) %}
+                                <li class="list-group-item">
+                                    {% if source == 'company_website' %}
+                                        <i class="bi bi-globe me-2"></i> Company Website
+                                    {% elif source == 'linkedin' %}
+                                        <i class="bi bi-linkedin me-2"></i> LinkedIn
+                                    {% else %}
+                                        <i class="bi bi-journal-text me-2"></i> {{ source|title }}
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                            
+                            {% if not company_data.get('metadata', {}).get('sources', []) %}
+                                <li class="list-group-item text-muted">No sources available</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+            
+            {% if company_reviews %}
+                <div class="card mt-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h3 class="card-title m-0">Review Sources</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">The current company reviews were collected from the following sources:</p>
+                        
+                        <ul class="list-group">
+                            {% for source in company_reviews.get('metadata', {}).get('sources', []) %}
+                                <li class="list-group-item">
+                                    {% if source == 'glassdoor' %}
+                                        <i class="bi bi-star-fill me-2"></i> Glassdoor
+                                    {% else %}
+                                        <i class="bi bi-journal-text me-2"></i> {{ source|title }}
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                            
+                            {% if not company_reviews.get('metadata', {}).get('sources', []) %}
+                                <li class="list-group-item text-muted">No review sources available</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle tab navigation from URL hash
+        const hash = window.location.hash;
+        if (hash) {
+            const tabId = hash.replace('#', '');
+            const tab = document.querySelector(`#${tabId}-tab`);
+            if (tab) {
+                const bsTab = new bootstrap.Tab(tab);
+                bsTab.show();
+            }
+        }
+        
+        // Update URL hash when tabs change
+        const tabs = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabs.forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function(event) {
+                const id = event.target.id.replace('-tab', '');
+                history.replaceState(null, null, `#${id}`);
+            });
+        });
+    });
+</script>
+{% endblock %}

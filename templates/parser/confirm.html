@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirm Job Details - Job Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
+            <h1 class="mt-2">Confirm Job Details</h1>
+            <p class="text-muted">Review the extracted information and make any necessary corrections before adding to your tracker.</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form action="{{ url_for('parser_routes.confirm_parsed_job') }}" method="post">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="title" class="form-label">Job Title <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="title" name="title" 
+                                       value="{{ job_data.title }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="company" class="form-label">Company <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="company" name="company" 
+                                       value="{{ job_data.company }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="location" name="location" 
+                                       value="{{ job_data.location }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="job_type" class="form-label">Job Type</label>
+                                <select class="form-select" id="job_type" name="job_type">
+                                    <option value="" {% if not job_data.job_type %}selected{% endif %}>Select Job Type</option>
+                                    <option value="Full-time" {% if job_data.job_type == 'Full-time' %}selected{% endif %}>Full-time</option>
+                                    <option value="Part-time" {% if job_data.job_type == 'Part-time' %}selected{% endif %}>Part-time</option>
+                                    <option value="Contract" {% if job_data.job_type == 'Contract' %}selected{% endif %}>Contract</option>
+                                    <option value="Temporary" {% if job_data.job_type == 'Temporary' %}selected{% endif %}>Temporary</option>
+                                    <option value="Internship" {% if job_data.job_type == 'Internship' %}selected{% endif %}>Internship</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="salary" class="form-label">Salary</label>
+                            <input type="text" class="form-control" id="salary" name="salary" 
+                                   value="{{ job_data.salary }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="url" class="form-label">Job URL</label>
+                            <input type="url" class="form-control" id="url" name="url" 
+                                   value="{{ url if url else job_data.url }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Job Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="10">{{ job_data.description }}</textarea>
+                        </div>
+                        
+                        <div class="mt-4 d-flex justify-content-between">
+                            <a href="javascript:history.back()" class="btn btn-outline-secondary">Back</a>
+                            <button type="submit" class="btn btn-primary">Add Job</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Extraction Results</h5>
+                </div>
+                <div class="card-body">
+                    <p>We've extracted the following information:</p>
+                    <ul>
+                        <li><strong>Job Title:</strong> {% if job_data.title %}<span class="text-success">✓</span>{% else %}<span class="text-danger">✗</span>{% endif %}</li>
+                        <li><strong>Company:</strong> {% if job_data.company %}<span class="text-success">✓</span>{% else %}<span class="text-danger">✗</span>{% endif %}</li>
+                        <li><strong>Location:</strong> {% if job_data.location %}<span class="text-success">✓</span>{% else %}<span class="text-danger">✗</span>{% endif %}</li>
+                        <li><strong>Job Type:</strong> {% if job_data.job_type %}<span class="text-success">✓</span>{% else %}<span class="text-danger">✗</span>{% endif %}</li>
+                        <li><strong>Salary:</strong> {% if job_data.salary %}<span class="text-success">✓</span>{% else %}<span class="text-danger">✗</span>{% endif %}</li>
+                        <li><strong>URL:</strong> {% if url or job_data.url %}<span class="text-success">✓</span>{% else %}<span class="text-danger">✗</span>{% endif %}</li>
+                    </ul>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-1"></i> Please review and correct any missing or incorrect information.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Tips</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Job title and company are required fields.</li>
+                        <li>Review the job description for any formatting issues.</li>
+                        <li>You can add notes and contacts after saving the job.</li>
+                        <li>The job will be saved with "Saved" status initially.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

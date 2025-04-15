@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Job - Job Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{{ url_for('job.view_job', job_id=job.id) }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i> Back to Job
+            </a>
+            <h1 class="mt-2">Edit Job</h1>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form action="{{ url_for('job.edit_job', job_id=job.id) }}" method="post">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="title" class="form-label">Job Title <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="title" name="title" value="{{ job.title }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="company" class="form-label">Company <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="company" name="company" value="{{ job.company }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="location" name="location" value="{{ job.location or '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="job_type" class="form-label">Job Type</label>
+                                <select class="form-select" id="job_type" name="job_type">
+                                    <option value="" {% if not job.job_type %}selected{% endif %}>Select Job Type</option>
+                                    <option value="Full-time" {% if job.job_type == 'Full-time' %}selected{% endif %}>Full-time</option>
+                                    <option value="Part-time" {% if job.job_type == 'Part-time' %}selected{% endif %}>Part-time</option>
+                                    <option value="Contract" {% if job.job_type == 'Contract' %}selected{% endif %}>Contract</option>
+                                    <option value="Temporary" {% if job.job_type == 'Temporary' %}selected{% endif %}>Temporary</option>
+                                    <option value="Internship" {% if job.job_type == 'Internship' %}selected{% endif %}>Internship</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="salary" class="form-label">Salary</label>
+                                <input type="text" class="form-control" id="salary" name="salary" value="{{ job.salary or '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="status" class="form-label">Application Status <span class="text-danger">*</span></label>
+                                <select class="form-select" id="status" name="status" required>
+                                    <option value="Saved" {% if job.status == 'Saved' %}selected{% endif %}>Saved</option>
+                                    <option value="Applied" {% if job.status == 'Applied' %}selected{% endif %}>Applied</option>
+                                    <option value="Phone Interview" {% if job.status == 'Phone Interview' %}selected{% endif %}>Phone Interview</option>
+                                    <option value="Technical Interview" {% if job.status == 'Technical Interview' %}selected{% endif %}>Technical Interview</option>
+                                    <option value="Onsite Interview" {% if job.status == 'Onsite Interview' %}selected{% endif %}>Onsite Interview</option>
+                                    <option value="Offer" {% if job.status == 'Offer' %}selected{% endif %}>Offer</option>
+                                    <option value="Rejected" {% if job.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="url" class="form-label">Job URL</label>
+                            <input type="url" class="form-control" id="url" name="url" value="{{ job.url or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="date_applied" class="form-label">Date Applied</label>
+                            <input type="date" class="form-control" id="date_applied" name="date_applied" 
+                                  value="{{ job.date_applied.strftime('%Y-%m-%d') if job.date_applied else '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Job Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="10">{{ job.description or '' }}</textarea>
+                        </div>
+                        
+                        <div class="mt-4 d-flex justify-content-between">
+                            <a href="{{ url_for('job.view_job', job_id=job.id) }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Tips</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Keeping your job description up-to-date will help you prepare for interviews.</li>
+                        <li>Make sure to update the application status as you progress through the hiring process.</li>
+                        <li>Add notes about important details, interview feedback, or follow-up tasks.</li>
+                        <li>Save contact information for recruiters and interviewers for future networking.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

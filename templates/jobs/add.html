@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Job - Job Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="mb-3">
+                <h1 class="h3">Add New Job</h1>
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form action="{{ url_for('job_routes.add_job') }}" method="post">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="title" class="form-label">Job Title <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="title" name="title" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="company" class="form-label">Company <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="company" name="company" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="location" name="location">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="job_type" class="form-label">Job Type</label>
+                                <select class="form-select" id="job_type" name="job_type">
+                                    <option value="" selected>Select Job Type</option>
+                                    <option value="Full-time">Full-time</option>
+                                    <option value="Part-time">Part-time</option>
+                                    <option value="Contract">Contract</option>
+                                    <option value="Temporary">Temporary</option>
+                                    <option value="Internship">Internship</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="salary" class="form-label">Salary</label>
+                                <input type="text" class="form-control" id="salary" name="salary">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="status" class="form-label">Application Status</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="Saved" selected>Saved</option>
+                                    <option value="Applied">Applied</option>
+                                    <option value="Phone Interview">Phone Interview</option>
+                                    <option value="Technical Interview">Technical Interview</option>
+                                    <option value="Onsite Interview">Onsite Interview</option>
+                                    <option value="Offer">Offer</option>
+                                    <option value="Rejected">Rejected</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="url" class="form-label">Job URL</label>
+                            <input type="url" class="form-control" id="url" name="url">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="date_applied" class="form-label">Date Applied</label>
+                            <input type="date" class="form-control" id="date_applied" name="date_applied">
+                            <small class="form-text text-muted">Leave blank if you haven't applied yet</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Job Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="10"></textarea>
+                        </div>
+                        
+                        <div class="mt-4 d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Save Job</button>
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Add Options</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">For faster job posting, you can:</p>
+                    <a href="{{ url_for('parser.parse_url') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-link me-1"></i> Parse from LinkedIn URL
+                    </a>
+                    <a href="{{ url_for('parser.parse_text') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-clipboard me-1"></i> Paste Job Description
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Tips</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Add jobs as soon as you find them, even if you haven't applied yet.</li>
+                        <li>Copy the full job description to help prepare for interviews later.</li>
+                        <li>Make notes about why you're interested in this role for future reference.</li>
+                        <li>Keep track of the application status to organize your job search.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Jobs - Job Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ current_status }} Jobs</h1>
+    <div>
+        <a href="{{ url_for('job_routes.add_job') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Add Job
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a class="nav-link {% if current_status == 'All' %}active{% endif %}" 
+                   href="{{ url_for('job_routes.list_jobs', status='All') }}">All</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if current_status == 'Saved' %}active{% endif %}" 
+                   href="{{ url_for('job_routes.list_jobs', status='Saved') }}">Saved</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if current_status == 'Applied' %}active{% endif %}" 
+                   href="{{ url_for('job_routes.list_jobs', status='Applied') }}">Applied</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if current_status == 'Phone Interview' %}active{% endif %}" 
+                   href="{{ url_for('job_routes.list_jobs', status='Phone Interview') }}">Phone Interview</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if current_status == 'Technical Interview' %}active{% endif %}" 
+                   href="{{ url_for('job_routes.list_jobs', status='Technical Interview') }}">Technical Interview</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if current_status == 'Onsite Interview' %}active{% endif %}" 
+                   href="{{ url_for('job_routes.list_jobs', status='Onsite Interview') }}">Onsite Interview</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if current_status == 'Offer' %}active{% endif %}" 
+                   href="{{ url_for('job_routes.list_jobs', status='Offer') }}">Offer</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if current_status == 'Rejected' %}active{% endif %}" 
+                   href="{{ url_for('job_routes.list_jobs', status='Rejected') }}">Rejected</a>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body p-0">
+        {% if jobs %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Job Title</th>
+                            <th>Company</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                            <th>Date Added</th>
+                            <th>Date Applied</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for job in jobs %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('job.view_job', job_id=job.id) }}" class="text-decoration-none">
+                                    {{ job.title }}
+                                </a>
+                            </td>
+                            <td>{{ job.company }}</td>
+                            <td>{{ job.location }}</td>
+                            <td>
+                                {% if job.status == 'Saved' %}
+                                <span class="badge bg-secondary">{{ job.status }}</span>
+                                {% elif job.status == 'Applied' %}
+                                <span class="badge bg-primary">{{ job.status }}</span>
+                                {% elif job.status in ['Phone Interview', 'Technical Interview', 'Onsite Interview'] %}
+                                <span class="badge bg-info text-dark">{{ job.status }}</span>
+                                {% elif job.status == 'Offer' %}
+                                <span class="badge bg-success">{{ job.status }}</span>
+                                {% elif job.status == 'Rejected' %}
+                                <span class="badge bg-danger">{{ job.status }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ job.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ job.date_added.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                {% if job.date_applied %}
+                                {{ job.date_applied.strftime('%Y-%m-%d') }}
+                                {% else %}
+                                --
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('job.view_job', job_id=job.id) }}" 
+                                       class="btn btn-sm btn-outline-secondary" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('job.edit_job', job_id=job.id) }}" 
+                                       class="btn btn-sm btn-outline-primary" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            data-bs-toggle="modal" data-bs-target="#deleteJobModal{{ job.id }}" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Delete Modal -->
+                                <div class="modal fade" id="deleteJobModal{{ job.id }}" tabindex="-1" aria-labelledby="deleteJobModalLabel{{ job.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="deleteJobModalLabel{{ job.id }}">Confirm Delete</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Are you sure you want to delete the job "{{ job.title }}" at {{ job.company }}?
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <form action="{{ url_for('job.delete_job', job_id=job.id) }}" method="post">
+                                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center p-5">
+                <p class="text-muted mb-3">No jobs found in this category</p>
+                <a href="{{ url_for('job_routes.add_job') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Add Job
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
