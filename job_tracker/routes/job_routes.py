@@ -4,9 +4,9 @@ from job_tracker import db
 from datetime import datetime
 import json
 
-job_bp = Blueprint('job', __name__)
+job = Blueprint('job', __name__)
 
-@job_bp.route('/jobs')
+@job.route('/jobs')
 def list_jobs():
     """List all jobs."""
     status_filter = request.args.get('status', None)
@@ -18,7 +18,7 @@ def list_jobs():
     
     return render_template('jobs/list.html', jobs=jobs, current_status=status_filter or 'All')
 
-@job_bp.route('/jobs/add', methods=['GET', 'POST'])
+@job.route('/jobs/add', methods=['GET', 'POST'])
 def add_job():
     """Add a new job manually."""
     if request.method == 'POST':
@@ -35,7 +35,7 @@ def add_job():
             flash('Job title and company are required!', 'danger')
             return redirect(url_for('job.add_job'))
         
-        job = Job(
+        job_instance = Job(
             title=title,
             company=company,
             location=location,
@@ -51,31 +51,31 @@ def add_job():
         if status in ['Applied', 'Phone Interview', 'Technical Interview', 'Onsite Interview', 'Offer', 'Rejected']:
             date_applied = request.form.get('date_applied')
             if date_applied:
-                job.date_applied = datetime.strptime(date_applied, '%Y-%m-%d')
+                job_instance.date_applied = datetime.strptime(date_applied, '%Y-%m-%d')
         
-        db.session.add(job)
+        db.session.add(job_instance)
         db.session.commit()
         
         flash('Job added successfully!', 'success')
-        return redirect(url_for('job.view_job', job_id=job.id))
+        return redirect(url_for('job.view_job', job_id=job_instance.id))
     
     return render_template('jobs/add.html')
 
-@job_bp.route('/jobs/<int:job_id>')
+@job.route('/jobs/<int:job_id>')
 def view_job(job_id):
     """View a specific job."""
-    job = Job.query.get_or_404(job_id)
+    job_instance = Job.query.get_or_404(job_id)
     notes = Note.query.filter_by(job_id=job_id).order_by(Note.date_added.desc()).all()
     contacts = Contact.query.filter_by(job_id=job_id).all()
     
     # Convert parsed_data JSON string to Python dictionary
-    if job.parsed_data:
+    if job_instance.parsed_data:
         try:
-            job.parsed_data = json.loads(job.parsed_data)
+            job_instance.parsed_data = json.loads(job_instance.parsed_data)
             
             # Clean up text formatting issues
-            if job.parsed_data and 'sections' in job.parsed_data:
-                for section in job.parsed_data['sections']:
+            if job_instance.parsed_data and 'sections' in job_instance.parsed_data:
+                for section in job_instance.parsed_data['sections']:
                     if section['type'] == 'paragraph' and isinstance(section['content'], str):
                         # Clean excessive whitespace and newlines
                         content = section['content'].strip()
@@ -86,7 +86,7 @@ def view_job(job_id):
                         content = content.replace('show more', '')
                         content = content.replace('show less', '')
                         content = content.replace('Show more', '')
-                        content = content.replace('Show less', '')
+                        content = content.replace('Show Less', '')
                         content = content.replace('...', '')
                         
                         section['content'] = content
@@ -101,7 +101,7 @@ def view_job(job_id):
                                 item = item.replace('show more', '')
                                 item = item.replace('show less', '')
                                 item = item.replace('Show more', '')
-                                item = item.replace('Show less', '')
+                                item = item.replace('Show Less', '')
                                 item = item.replace('...', '')
                                 
                                 if item:  # Only add non-empty items
@@ -109,71 +109,71 @@ def view_job(job_id):
                         
                         section['content'] = cleaned_items
         except (json.JSONDecodeError, TypeError):
-            job.parsed_data = None
+            job_instance.parsed_data = None
     
-    return render_template('jobs/view_with_tabs.html', job=job, notes=notes, contacts=contacts)
+    return render_template('jobs/view_with_tabs.html', job=job_instance, notes=notes, contacts=contacts)
 
-@job_bp.route('/jobs/<int:job_id>/edit', methods=['GET', 'POST'])
+@job.route('/jobs/<int:job_id>/edit', methods=['GET', 'POST'])
 def edit_job(job_id):
     """Edit a job."""
-    job = Job.query.get_or_404(job_id)
+    job_instance = Job.query.get_or_404(job_id)
     
     if request.method == 'POST':
-        job.title = request.form.get('title')
-        job.company = request.form.get('company')
-        job.location = request.form.get('location')
-        job.description = request.form.get('description')
-        job.url = request.form.get('url')
-        job.salary = request.form.get('salary')
-        job.job_type = request.form.get('job_type')
+        job_instance.title = request.form.get('title')
+        job_instance.company = request.form.get('company')
+        job_instance.location = request.form.get('location')
+        job_instance.description = request.form.get('description')
+        job_instance.url = request.form.get('url')
+        job_instance.salary = request.form.get('salary')
+        job_instance.job_type = request.form.get('job_type')
         new_status = request.form.get('status')
         
         # If status changed to Applied and no date_applied set, set it to now
-        if new_status == 'Applied' and job.status != 'Applied' and not job.date_applied:
-            job.date_applied = datetime.utcnow()
+        if new_status == 'Applied' and job_instance.status != 'Applied' and not job_instance.date_applied:
+            job_instance.date_applied = datetime.utcnow()
         
-        job.status = new_status
+        job_instance.status = new_status
         
         # Update date_applied if provided
         date_applied = request.form.get('date_applied')
         if date_applied:
-            job.date_applied = datetime.strptime(date_applied, '%Y-%m-%d')
+            job_instance.date_applied = datetime.strptime(date_applied, '%Y-%m-%d')
         
         db.session.commit()
         flash('Job updated successfully!', 'success')
-        return redirect(url_for('job.view_job', job_id=job.id))
+        return redirect(url_for('job.view_job', job_id=job_instance.id))
     
-    return render_template('jobs/edit.html', job=job)
+    return render_template('jobs/edit.html', job=job_instance)
 
-@job_bp.route('/jobs/<int:job_id>/delete', methods=['POST'])
+@job.route('/jobs/<int:job_id>/delete', methods=['POST'])
 def delete_job(job_id):
     """Delete a job."""
-    job = Job.query.get_or_404(job_id)
+    job_instance = Job.query.get_or_404(job_id)
     
-    db.session.delete(job)
+    db.session.delete(job_instance)
     db.session.commit()
     
     flash('Job deleted successfully!', 'success')
-    return redirect(url_for('main.index'))
+    return redirect(url_for('main.dashboard'))
 
-@job_bp.route('/jobs/<int:job_id>/add_note', methods=['POST'])
+@job.route('/jobs/<int:job_id>/add_note', methods=['POST'])
 def add_note(job_id):
     """Add a note to a job."""
-    job = Job.query.get_or_404(job_id)
+    job_instance = Job.query.get_or_404(job_id)
     note_content = request.form.get('note_content')
     
     if note_content:
-        note = Note(content=note_content, job_id=job.id)
+        note = Note(content=note_content, job_id=job_instance.id)
         db.session.add(note)
         db.session.commit()
         flash('Note added successfully!', 'success')
     
-    return redirect(url_for('job.view_job', job_id=job.id))
+    return redirect(url_for('job.view_job', job_id=job_instance.id))
 
-@job_bp.route('/jobs/<int:job_id>/add_contact', methods=['POST'])
+@job.route('/jobs/<int:job_id>/add_contact', methods=['POST'])
 def add_contact(job_id):
     """Add a contact to a job."""
-    job = Job.query.get_or_404(job_id)
+    job_instance = Job.query.get_or_404(job_id)
     
     name = request.form.get('contact_name')
     title = request.form.get('contact_title')
@@ -190,27 +190,27 @@ def add_contact(job_id):
             phone=phone,
             linkedin=linkedin,
             notes=notes,
-            job_id=job.id
+            job_id=job_instance.id
         )
         db.session.add(contact)
         db.session.commit()
         flash('Contact added successfully!', 'success')
     
-    return redirect(url_for('job.view_job', job_id=job.id))
+    return redirect(url_for('job.view_job', job_id=job_instance.id))
 
-@job_bp.route('/jobs/<int:job_id>/update_status', methods=['POST'])
+@job.route('/jobs/<int:job_id>/update_status', methods=['POST'])
 def update_status(job_id):
     """Quick update of job status."""
-    job = Job.query.get_or_404(job_id)
+    job_instance = Job.query.get_or_404(job_id)
     new_status = request.form.get('status')
     
     if new_status:
         # If changing to Applied and no date_applied, set it to now
-        if new_status == 'Applied' and job.status != 'Applied' and not job.date_applied:
-            job.date_applied = datetime.utcnow()
+        if new_status == 'Applied' and job_instance.status != 'Applied' and not job_instance.date_applied:
+            job_instance.date_applied = datetime.utcnow()
             
-        job.status = new_status
+        job_instance.status = new_status
         db.session.commit()
         flash(f'Status updated to {new_status}!', 'success')
     
-    return redirect(request.referrer or url_for('main.index'))
+    return redirect(request.referrer or url_for('main.dashboard'))
