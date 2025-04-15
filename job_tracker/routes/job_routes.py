@@ -61,57 +61,157 @@ def add_job():
     
     return render_template('jobs/add.html')
 
-@job_bp.route('/jobs/<int:job_id>')
-def view_job(job_id):
-    """View a specific job."""
-    job = Job.query.get_or_404(job_id)
+def _parse_job_data(job_data):
+    """
+    Parse JSON string into Python dictionary.
+    
+    Args:
+        job_data: JSON string to parse
+        
+    Returns:
+        Parsed dictionary or None if parsing fails
+    """
+    if not job_data:
+        return None
+        
+    try:
+        return json.loads(job_data)
+    except (json.JSONDecodeError, TypeError):
+        return None
+
+
+def _clean_text_content(content):
+    """
+    Clean text content by removing artifacts and excessive whitespace.
+    
+    Args:
+        content: String content to clean
+        
+    Returns:
+        Cleaned string content
+    """
+    if not isinstance(content, str):
+        return content
+        
+    # Clean excessive whitespace and newlines
+    content = content.strip()
+    content = content.replace('\n\n\n', '\n').replace('\n\n', '\n')
+    
+    # Remove "show more/less" text and similar artifacts
+    artifacts = ['show more', 'show less', 'Show more', 'Show less', '...']
+    for artifact in artifacts:
+        content = content.replace(artifact, '')
+        
+    return content
+
+
+def _clean_list_items(items):
+    """
+    Clean a list of text items.
+    
+    Args:
+        items: List of string items to clean
+        
+    Returns:
+        List of cleaned string items
+    """
+    cleaned_items = []
+    
+    for item in items:
+        if isinstance(item, str) and (clean_item := _clean_text_content(item)):
+            cleaned_items.append(clean_item)
+            
+    return cleaned_items
+
+
+def _process_parsed_sections(sections):
+    """
+    Process and clean sections from parsed job data.
+    
+    Args:
+        sections: List of section dictionaries
+        
+    Returns:
+        Processed sections with cleaned content
+    """
+    if not sections:
+        return sections
+        
+    for section in sections:
+        if section['type'] == 'paragraph' and isinstance(section['content'], str):
+            section['content'] = _clean_text_content(section['content'])
+        elif section['type'] == 'list' and isinstance(section['content'], list):
+            section['content'] = _clean_list_items(section['content'])
+            
+    return sections
+
+
+def _prepare_job_parsed_data(job):
+    """
+    Process and prepare job's parsed data for display.
+    
+    Args:
+        job: Job object with potential parsed_data
+        
+    Returns:
+        Job object with processed parsed_data
+    """
+    # Skip processing if no parsed data exists
+    if not (parsed_data := _parse_job_data(job.parsed_data)):
+        return job
+        
+    job.parsed_data = parsed_data
+    
+    # Process sections if they exist
+    if 'sections' in parsed_data:
+        job.parsed_data['sections'] = _process_parsed_sections(parsed_data['sections'])
+        
+    return job
+
+def _get_job_related_data(job_id):
+    """
+    Fetch notes and contacts related to a specific job.
+    
+    Args:
+        job_id: ID of the job to get related data for
+        
+    Returns:
+        Tuple containing (notes, contacts)
+    """
     notes = Note.query.filter_by(job_id=job_id).order_by(Note.date_added.desc()).all()
     contacts = Contact.query.filter_by(job_id=job_id).all()
+    return notes, contacts
+
+@job_bp.route('/jobs/<int:job_id>')
+def view_job(job_id):
+    """
+    View a specific job with its notes and contacts.
     
-    # Convert parsed_data JSON string to Python dictionary
-    if job.parsed_data:
-        try:
-            job.parsed_data = json.loads(job.parsed_data)
-            
-            # Clean up text formatting issues
-            if job.parsed_data and 'sections' in job.parsed_data:
-                for section in job.parsed_data['sections']:
-                    if section['type'] == 'paragraph' and isinstance(section['content'], str):
-                        # Clean excessive whitespace and newlines
-                        content = section['content'].strip()
-                        content = content.replace('\n\n\n', '\n')
-                        content = content.replace('\n\n', '\n')
-                        
-                        # Remove "show more/less" text and similar artifacts
-                        content = content.replace('show more', '')
-                        content = content.replace('show less', '')
-                        content = content.replace('Show more', '')
-                        content = content.replace('Show less', '')
-                        content = content.replace('...', '')
-                        
-                        section['content'] = content
-                    
-                    elif section['type'] == 'list' and isinstance(section['content'], list):
-                        # Clean list items
-                        cleaned_items = []
-                        for item in section['content']:
-                            if isinstance(item, str):
-                                # Remove bullets, numbers and excessive whitespace
-                                item = item.strip()
-                                item = item.replace('show more', '')
-                                item = item.replace('show less', '')
-                                item = item.replace('Show more', '')
-                                item = item.replace('Show less', '')
-                                item = item.replace('...', '')
-                                
-                                if item:  # Only add non-empty items
-                                    cleaned_items.append(item)
-                        
-                        section['content'] = cleaned_items
-        except (json.JSONDecodeError, TypeError):
-            job.parsed_data = None
+    Retrieves job details, associated notes and contacts, and processes
+    any parsed job description data for display.
     
-    return render_template('jobs/view_with_tabs.html', job=job, notes=notes, contacts=contacts)
+    Args:
+        job_id: ID of the job to view
+        
+    Returns:
+        Rendered template with job, notes, and contacts
+    """
+    # Get job by ID and process its parsed data in one step
+    if not (job := Job.query.get_or_404(job_id)):
+        return redirect(url_for('main.index'))
+        
+    # Get related data
+    notes, contacts = _get_job_related_data(job_id)
+    
+    # Process any parsed data the job might have
+    job = _prepare_job_parsed_data(job)
+    
+    return render_template(
+        'jobs/view_with_tabs.html', 
+        job=job, 
+        notes=notes, 
+        contacts=contacts
+    )
 
 @job_bp.route('/jobs/<int:job_id>/edit', methods=['GET', 'POST'])
 def edit_job(job_id):
