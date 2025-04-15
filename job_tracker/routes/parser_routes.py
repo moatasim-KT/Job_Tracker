@@ -220,7 +220,7 @@ def extract_from_text(text):
         r'(?:Salary|Compensation):?\s*([^\n]+?)(?:\n|$)',
         r'\$\s*\d+[kK]\s*-\s*\$\s*\d+[kK]',
         r'\$\s*\d{2,3},\d{3}\s*-\s*\$\s*\d{2,3},\d{3}',
-        r'\$\d{2,3},\d{3}(?:\+\s*)?(?:annually|per year)?',
+        r'\$\s*\d{2,3},\d{3}(?:\+\s*)?(?:annually|per year)?',
         r'\$\d{2,3}[kK](?:\+\s*)?(?:annually|per year)?'
     ]
     
