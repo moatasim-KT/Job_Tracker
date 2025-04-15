@@ -30,7 +30,7 @@ def parse_url():
                 existing_job = Job.query.filter_by(url=url).first()
                 if existing_job:
                     flash('This job is already in your tracker!', 'warning')
-                    return redirect(url_for('job_routes.view_job', job_id=existing_job.id))
+                    return redirect(url_for('job.view_job', job_id=existing_job.id))
                 
                 # Create new job
                 return render_template('parser/confirm.html', job_data=job_data, url=url)
@@ -61,7 +61,7 @@ def parse_text():
             else:
                 flash('Could not extract enough job details from text. Please fill in the form manually.', 'warning')
                 # Pre-fill what we could extract
-                return redirect(url_for('job_routes.add_job'))
+                return redirect(url_for('job.add_job'))
         except Exception as e:
             flash(f'Error parsing text: {str(e)}', 'danger')
             return redirect(url_for('parser.parse_text'))
@@ -81,7 +81,7 @@ def confirm_parsed_job():
     
     if not title or not company:
         flash('Job title and company are required!', 'danger')
-        return redirect(url_for('job_routes.add_job'))
+        return redirect(url_for('job.add_job'))
     
     # Parse job description using LLM to extract structured data
     parsed_data = {}
@@ -107,7 +107,7 @@ def confirm_parsed_job():
     db.session.commit()
     
     flash('Job added successfully!', 'success')
-    return redirect(url_for('job_routes.view_job', job_id=job.id))
+    return redirect(url_for('job.view_job', job_id=job.id))
 
 def extract_from_linkedin(url):
     """Extract job details from a LinkedIn job posting URL."""
