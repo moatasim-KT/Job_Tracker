@@ -17,7 +17,7 @@
         <div class="col-lg-8">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <form action="{{ url_for('parser_routes.parse_text') }}" method="post">
+                    <form action="{{ url_for('parser.parse_text') }}" method="post">
                         <div class="mb-4">
                             <label for="job_text" class="form-label">Job Description <span class="text-danger">*</span></label>
                             <textarea class="form-control" id="job_text" name="job_text" rows="15" 

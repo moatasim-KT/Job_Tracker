@@ -31,7 +31,7 @@
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Recent Job Listings</h5>
-                <a href="{{ url_for('job_routes.list_jobs') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                <a href="{{ url_for('job.list_jobs') }}" class="btn btn-sm btn-outline-primary">View All</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -49,7 +49,7 @@
                             {% for job in jobs[:5] %}
                             <tr>
                                 <td>
-                                    <a href="{{ url_for('job_routes.view_job', job_id=job.id) }}" class="text-decoration-none">
+                                    <a href="{{ url_for('job.view_job', job_id=job.id) }}" class="text-decoration-none">
                                         {{ job.title }}
                                     </a>
                                 </td>
