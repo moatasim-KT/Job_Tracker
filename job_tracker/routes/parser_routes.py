@@ -10,9 +10,9 @@ import html2text
 import json
 import os
 
-parser_bp = Blueprint('parser', __name__)
+parser = Blueprint('parser', __name__)
 
-@parser_bp.route('/parse/url', methods=['GET', 'POST'])
+@parser.route('/parse/url', methods=['GET', 'POST'])
 def parse_url():
     """Parse job details from a LinkedIn URL."""
     if request.method == 'POST':
@@ -43,7 +43,7 @@ def parse_url():
     
     return render_template('parser/url_form.html')
 
-@parser_bp.route('/parse/text', methods=['GET', 'POST'])
+@parser.route('/parse/text', methods=['GET', 'POST'])
 def parse_text():
     """Parse job details from pasted text or uploaded document."""
     if request.method == 'POST':
@@ -68,7 +68,7 @@ def parse_text():
     
     return render_template('parser/text_form.html')
 
-@parser_bp.route('/parse/confirm', methods=['POST'])
+@parser.route('/parse/confirm', methods=['POST'])
 def confirm_parsed_job():
     """Save parsed job information after user confirmation."""
     title = request.form.get('title')
@@ -86,8 +86,8 @@ def confirm_parsed_job():
     # Parse job description using LLM to extract structured data
     parsed_data = {}
     if description:
-        parser = JobDescriptionParser()
-        parsed_data = parser.parse_description(description)
+        parser_instance = JobDescriptionParser()
+        parsed_data = parser_instance.parse_description(description)
     
     # Create job
     job = Job(
