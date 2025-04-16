@@ -10,9 +10,9 @@ import html2text
 import json
 import os
 
-parser = Blueprint('parser', __name__)
+parser_bp = Blueprint('parser', __name__)
 
-@parser.route('/parse/url', methods=['GET', 'POST'])
+@parser_bp.route('/parse/url', methods=['GET', 'POST'])
 def parse_url():
     """Parse job details from a LinkedIn URL."""
     if request.method == 'POST':
@@ -20,7 +20,7 @@ def parse_url():
         
         if not url:
             flash('Please provide a URL', 'danger')
-            return redirect(url_for('parser.parse_url'))
+            return redirect(url_for('parser_bp.parse_url'))
             
         try:
             job_data = extract_from_linkedin(url)
@@ -39,36 +39,43 @@ def parse_url():
         except Exception as e:
             flash(f'Error parsing URL: {str(e)}', 'danger')
         
-        return redirect(url_for('parser.parse_url'))
+        return redirect(url_for('parser_bp.parse_url'))
     
     return render_template('parser/url_form.html')
 
-@parser.route('/parse/text', methods=['GET', 'POST'])
+@parser_bp.route('/parse/text', methods=['GET', 'POST'])
 def parse_text():
-    """Parse job details from pasted text or uploaded document."""
+    """Parse job details from pasted text or uploaded document using LLM."""
     if request.method == 'POST':
         job_text = request.form.get('job_text')
         
         if not job_text:
             flash('Please provide job description text', 'danger')
-            return redirect(url_for('parser.parse_text'))
+            return redirect(url_for('parser_bp.parse_text'))
         
         try:
-            job_data = extract_from_text(job_text)
-            
-            if job_data:
-                return render_template('parser/confirm.html', job_data=job_data)
-            else:
-                flash('Could not extract enough job details from text. Please fill in the form manually.', 'warning')
-                # Pre-fill what we could extract
-                return redirect(url_for('job.add_job'))
+            # Use the LLM parser
+            parsed = JobDescriptionParser.parse_description(job_text)
+            # Map LLM output to expected fields
+            job_data = {
+                'title': parsed.get('title', ''),
+                'company': parsed.get('company', ''),
+                'location': parsed.get('location', ''),
+                'description': job_text,
+                'url': '',
+                'salary': parsed.get('salary', ''),
+                'job_type': parsed.get('job_type', ''),
+                'requirements': parsed.get('requirements', ''),
+                'sections': parsed.get('sections', [])
+            }
+            return render_template('parser/confirm.html', job_data=job_data)
         except Exception as e:
             flash(f'Error parsing text: {str(e)}', 'danger')
-            return redirect(url_for('parser.parse_text'))
+            return redirect(url_for('parser_bp.parse_text'))
     
     return render_template('parser/text_form.html')
 
-@parser.route('/parse/confirm', methods=['POST'])
+@parser_bp.route('/parse/confirm', methods=['POST'])
 def confirm_parsed_job():
     """Save parsed job information after user confirmation."""
     title = request.form.get('title')

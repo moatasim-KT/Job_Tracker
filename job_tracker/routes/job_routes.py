@@ -4,9 +4,9 @@ from job_tracker import db
 from datetime import datetime
 import json
 
-job = Blueprint('job', __name__)
+job_bp = Blueprint('job', __name__)
 
-@job.route('/jobs')
+@job_bp.route('/jobs')
 def list_jobs():
     """List all jobs."""
     status_filter = request.args.get('status', None)
@@ -18,7 +18,7 @@ def list_jobs():
     
     return render_template('jobs/list.html', jobs=jobs, current_status=status_filter or 'All')
 
-@job.route('/jobs/add', methods=['GET', 'POST'])
+@job_bp.route('/jobs/add', methods=['GET', 'POST'])
 def add_job():
     """Add a new job manually."""
     if request.method == 'POST':
@@ -33,7 +33,7 @@ def add_job():
         
         if not title or not company:
             flash('Job title and company are required!', 'danger')
-            return redirect(url_for('job.add_job'))
+            return redirect(url_for('job_bp.add_job'))
         
         job_instance = Job(
             title=title,
@@ -57,7 +57,7 @@ def add_job():
         db.session.commit()
         
         flash('Job added successfully!', 'success')
-        return redirect(url_for('job.view_job', job_id=job_instance.id))
+        return redirect(url_for('job_bp.view_job', job_id=job_instance.id))
     
     return render_template('jobs/add.html')
 
@@ -212,60 +212,8 @@ def view_job(job_id):
         notes=notes, 
         contacts=contacts
     )
-@job.route('/jobs/<int:job_id>')
-def view_job(job_id):
-    """View a specific job."""
-    job_instance = Job.query.get_or_404(job_id)
-    notes = Note.query.filter_by(job_id=job_id).order_by(Note.date_added.desc()).all()
-    contacts = Contact.query.filter_by(job_id=job_id).all()
-    
-    # Convert parsed_data JSON string to Python dictionary
-    if job_instance.parsed_data:
-        try:
-            job_instance.parsed_data = json.loads(job_instance.parsed_data)
-            
-            # Clean up text formatting issues
-            if job_instance.parsed_data and 'sections' in job_instance.parsed_data:
-                for section in job_instance.parsed_data['sections']:
-                    if section['type'] == 'paragraph' and isinstance(section['content'], str):
-                        # Clean excessive whitespace and newlines
-                        content = section['content'].strip()
-                        content = content.replace('\n\n\n', '\n')
-                        content = content.replace('\n\n', '\n')
-                        
-                        # Remove "show more/less" text and similar artifacts
-                        content = content.replace('show more', '')
-                        content = content.replace('show less', '')
-                        content = content.replace('Show more', '')
-                        content = content.replace('Show Less', '')
-                        content = content.replace('...', '')
-                        
-                        section['content'] = content
-                    
-                    elif section['type'] == 'list' and isinstance(section['content'], list):
-                        # Clean list items
-                        cleaned_items = []
-                        for item in section['content']:
-                            if isinstance(item, str):
-                                # Remove bullets, numbers and excessive whitespace
-                                item = item.strip()
-                                item = item.replace('show more', '')
-                                item = item.replace('show less', '')
-                                item = item.replace('Show more', '')
-                                item = item.replace('Show Less', '')
-                                item = item.replace('...', '')
-                                
-                                if item:  # Only add non-empty items
-                                    cleaned_items.append(item)
-                        
-                        section['content'] = cleaned_items
-        except (json.JSONDecodeError, TypeError):
-            job_instance.parsed_data = None
-    
-    return render_template('jobs/view_with_tabs.html', job=job_instance, notes=notes, contacts=contacts)
 
-
-@job.route('/jobs/<int:job_id>/edit', methods=['GET', 'POST'])
+@job_bp.route('/jobs/<int:job_id>/edit', methods=['GET', 'POST'])
 def edit_job(job_id):
     """Edit a job."""
     job_instance = Job.query.get_or_404(job_id)
@@ -293,11 +241,11 @@ def edit_job(job_id):
         
         db.session.commit()
         flash('Job updated successfully!', 'success')
-        return redirect(url_for('job.view_job', job_id=job_instance.id))
+        return redirect(url_for('job_bp.view_job', job_id=job_instance.id))
     
     return render_template('jobs/edit.html', job=job_instance)
 
-@job.route('/jobs/<int:job_id>/delete', methods=['POST'])
+@job_bp.route('/jobs/<int:job_id>/delete', methods=['POST'])
 def delete_job(job_id):
     """Delete a job."""
     job_instance = Job.query.get_or_404(job_id)
@@ -308,7 +256,7 @@ def delete_job(job_id):
     flash('Job deleted successfully!', 'success')
     return redirect(url_for('main.dashboard'))
 
-@job.route('/jobs/<int:job_id>/add_note', methods=['POST'])
+@job_bp.route('/jobs/<int:job_id>/add_note', methods=['POST'])
 def add_note(job_id):
     """Add a note to a job."""
     job_instance = Job.query.get_or_404(job_id)
@@ -320,9 +268,9 @@ def add_note(job_id):
         db.session.commit()
         flash('Note added successfully!', 'success')
     
-    return redirect(url_for('job.view_job', job_id=job_instance.id))
+    return redirect(url_for('job_bp.view_job', job_id=job_instance.id))
 
-@job.route('/jobs/<int:job_id>/add_contact', methods=['POST'])
+@job_bp.route('/jobs/<int:job_id>/add_contact', methods=['POST'])
 def add_contact(job_id):
     """Add a contact to a job."""
     job_instance = Job.query.get_or_404(job_id)
@@ -348,9 +296,9 @@ def add_contact(job_id):
         db.session.commit()
         flash('Contact added successfully!', 'success')
     
-    return redirect(url_for('job.view_job', job_id=job_instance.id))
+    return redirect(url_for('job_bp.view_job', job_id=job_instance.id))
 
-@job.route('/jobs/<int:job_id>/update_status', methods=['POST'])
+@job_bp.route('/jobs/<int:job_id>/update_status', methods=['POST'])
 def update_status(job_id):
     """Quick update of job status."""
     job_instance = Job.query.get_or_404(job_id)

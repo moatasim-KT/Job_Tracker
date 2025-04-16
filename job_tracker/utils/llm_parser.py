@@ -3,6 +3,8 @@ LLM-based job description parsing utilities.
 This module handles the extraction of structured information from job descriptions.
 """
 
+
+import contextlib
 import json
 import re
 import os
@@ -14,9 +16,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Groq API configuration
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY', "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")
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-DEFAULT_MODEL = os.environ.get('GROQ_MODEL', "meta-llama/llama-4-scout-17b-16e-instruct")
+DEFAULT_MODEL = os.environ.get("GROQ_MODEL", "compound-beta")
 
 class JobDescriptionParser:
     """Parser that uses LLM capabilities to extract structured information from job descriptions."""
@@ -37,13 +39,13 @@ class JobDescriptionParser:
             if not GROQ_API_KEY:
                 print("No Groq API key found. Set the GROQ_API_KEY environment variable to use the LLM parser.")
                 return JobDescriptionParser._heuristic_parse(description)
-            
+
             # Use Groq API with the specified model
             headers = {
                 "Authorization": f"Bearer {GROQ_API_KEY}",
                 "Content-Type": "application/json"
             }
-            
+
             prompt = f"""
             Analyze the job description below VERY CAREFULLY and extract structured information into the following distinct sections.
 
@@ -83,9 +85,9 @@ class JobDescriptionParser:
             {description}
             ---
             """
-            
+
             payload = {
-                "model": "llama-3.3-70b-versatile",
+                "model": DEFAULT_MODEL,
                 "messages": [
                     {"role": "system", "content": "You are an expert job description parser. Your primary goal is to extract structured information into STRICTLY DISTINCT, NON-OVERLAPPING sections. Prioritize accuracy and adherence to the non-overlapping rule above all else."},
                     {"role": "user", "content": prompt}
@@ -93,18 +95,18 @@ class JobDescriptionParser:
                 "temperature": 0.1,
                 "max_tokens": 4000
             }
-            
+
             response = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=30)
-            
+
             if response.status_code == 200:
                 result = response.json()
                 content = result["choices"][0]["message"]["content"]
-                
+
                 try:
                     parsed_data = json.loads(content)
                     if "sections" not in parsed_data:
                         parsed_data = {"sections": parsed_data}
-                    
+
                     # Additional processing to improve section quality
                     improved_sections = []
                     for section in parsed_data.get("sections", []):
@@ -113,68 +115,66 @@ class JobDescriptionParser:
                             # Convert string content into a list if marked as list type
                             items = [item.strip() for item in section["content"].split("\n") if item.strip()]
                             section["content"] = items
-                        
+
                         # Clean up list items
                         if section.get("type") == "list" and isinstance(section.get("content"), list):
                             # Remove bullet points and numbering from list items
                             cleaned_items = []
                             for item in section["content"]:
-                                item = re.sub(r'^[\s•\-\*\+\d\.\)]+', '', item).strip()
-                                if item:
+                                if item := re.sub(
+                                    r'^[\s•\-\*\+\d\.\)]+', '', item
+                                ).strip():
                                     cleaned_items.append(item)
                             section["content"] = cleaned_items
-                        
+
                         # Add processed section
                         if section.get("title") and (
                             (section.get("type") == "paragraph" and section.get("content")) or
                             (section.get("type") == "list" and section.get("content") and len(section["content"]) > 0)
                         ):
                             improved_sections.append(section)
-                    
+
                     # If we lost all sections in the cleaning, use the original
                     if improved_sections:
                         parsed_data["sections"] = improved_sections
-                    
+
                     # Add metadata about successful API parse
                     parsed_data["metadata"] = {
                         "parsing_method": "llm",
-                        "model": "llama-3.3-70b-versatile"
+                        "model": DEFAULT_MODEL
                     }
-                    
+
                     return parsed_data
-                    
+
                 except json.JSONDecodeError:
-                    # Try to extract JSON from text response
-                    json_match = re.search(r'```json\s*(.*?)\s*```', content, re.DOTALL)
-                    if json_match:
-                        try:
-                            parsed_data = json.loads(json_match.group(1))
+                    if json_match := re.search(
+                        r'```json\s*(.*?)\s*```', content, re.DOTALL
+                    ):
+                        with contextlib.suppress(json.JSONDecodeError):
+                            parsed_data = json.loads(json_match[1])
                             if "sections" not in parsed_data:
                                 parsed_data = {"sections": parsed_data}
                             # Add metadata about successful API parse
                             parsed_data["metadata"] = {
                                 "parsing_method": "llm",
-                                "model": "llama-3.3-70b-versatile"
+                                "model": DEFAULT_MODEL
                             }
                             return parsed_data
-                        except json.JSONDecodeError:
-                            pass
-            
             # Handle API error cases
             if response.status_code != 200:
                 error_detail = response.json().get("error", {}).get("message", "Unknown error") if response.headers.get("content-type") == "application/json" else f"Status code: {response.status_code}"
                 print(f"Groq API error: {error_detail}")
-                
+
                 # Check for authentication errors specifically
-                if response.status_code == 401 or response.status_code == 403:
+                if response.status_code in {401, 403}:
                     print("Authentication error with Groq API. Please check your API key.")
                 elif response.status_code == 429:
                     print("Rate limit exceeded for Groq API.")
-                
+
             # Fall back to heuristic parsing
             print("Error calling Groq API or parsing response, falling back to heuristic parsing")
             return JobDescriptionParser._heuristic_parse(description)
-            
+
         except Exception as e:
             print(f"Error in LLM parsing: {str(e)}")
             # Simplified heuristic-based parsing as fallback
@@ -185,7 +185,7 @@ class JobDescriptionParser:
         """Fallback method that uses regex patterns and heuristics to identify common sections in job descriptions"""
         print("--- Starting _heuristic_parse fallback ---")
         sections = []
-        
+
         # Helper function to check if a section already exists
         def section_exists(title):
             normalized_title = title.lower().strip()
@@ -193,7 +193,7 @@ class JobDescriptionParser:
                 if section["title"].lower().strip() == normalized_title:
                     return True
             return False
-        
+
         # Helper function to extract a section based on patterns
         def extract_section(patterns, title, content_filter=None):
             print(f"  Trying to extract section: {title}")
@@ -211,7 +211,7 @@ class JobDescriptionParser:
                                 continue
                             else:
                                 print("      Content passed filter.")
-                            
+
                         # Check if content is a list
                         is_list = bool(re.search(r'(?:^|\n)[ \t]*(?:•|\*|-|\d+[\.\)]|\([a-z0-9]\))[ \t]+', content))
                         if is_list:
@@ -245,32 +245,44 @@ class JobDescriptionParser:
                         print("      Content too short, skipping.")
                 print(f"  Finished trying to extract section: {title}")
             return False
-        
+
         # About the Company section patterns
         company_patterns = [
             r'(?:^|\n)(?:about (?:us|the company|our company|.{1,20} company))(.*?)(?:\n\n|\n(?:[A-Z])|$)',
             r'(?:^|\n)(?:company description|who we are|we are .{1,20})(.*?)(?:\n\n|\n(?:[A-Z])|$)',
             r'(?:^|\n)(?:our story|our mission|our values)(.*?)(?:\n\n|\n(?:[A-Z])|$)'
         ]
-        extract_section(company_patterns, "About the Company", 
-                       lambda content: not any(kw in content.lower() for kw in ['responsibility', 'requirement', 'qualification']))
-        
+        extract_section(
+            company_patterns,
+            "About the Company",
+            lambda content: all(
+                kw not in content.lower()
+                for kw in ['responsibility', 'requirement', 'qualification']
+            ),
+        )
+
         # About the Role section patterns
         role_patterns = [
             r'(?:^|\n)(?:about the (?:role|position|job|opportunity))(.*?)(?:\n\n|\n(?:[A-Z])|$)',
             r'(?:^|\n)(?:role overview|job overview|position overview|position summary|job summary)(.*?)(?:\n\n|\n(?:[A-Z])|$)',
             r'(?:^|\n)(?:we are looking for|we are seeking|we need)(.*?)(?:\n\n|\n(?:[A-Z])|$)'
         ]
-        extract_section(role_patterns, "About the Role", 
-                      lambda content: not any(kw in content.lower() for kw in ['responsibility', 'requirement', 'qualification']))
-        
+        extract_section(
+            role_patterns,
+            "About the Role",
+            lambda content: all(
+                kw not in content.lower()
+                for kw in ['responsibility', 'requirement', 'qualification']
+            ),
+        )
+
         # Responsibilities section patterns
         responsibility_patterns = [
             r'(?:^|\n)(?:responsibilities|duties|what you\'ll do|what you will do|job duties|day to day|day-to-day|in this role you will|your role|you will be responsible for)(.*?)(?:\n\n|\n(?:[A-Z])|$)',
             r'(?:^|\n)(?:your responsibilities include|as a .{1,30}, you will|as the .{1,30}, you will)(.*?)(?:\n\n|\n(?:[A-Z])|$)'
         ]
         extract_section(responsibility_patterns, "Responsibilities")
-        
+
         # Requirements (general) section patterns
         requirement_patterns = [
             r'(?:^|\n)(?:requirements|qualifications|what you\'ll need|what you need|what we are looking for|job requirements|you should have)(.*?)(?:\n\n|\n(?:[A-Z])|$)',
@@ -279,14 +291,14 @@ class JobDescriptionParser:
         # Only extract if it doesn't mention skills or education prominently
         extract_section(requirement_patterns, "Requirements", 
                        lambda content: not (re.search(r'(?:degree|education|bachelor|master|phd|diploma)', content.lower()) and len(content) < 300))
-        
+
         # Skills (specific technical skills) section patterns
         skills_patterns = [
             r'(?:^|\n)(?:skills|technical skills|technical requirements|technical qualifications|you should know|you must know|must have skills|required skills)(.*?)(?:\n\n|\n(?:[A-Z])|$)',
             r'(?:^|\n)(?:professional skills|soft skills|technical proficiency|tech stack|programming languages|tools & technologies|tools and technologies)(.*?)(?:\n\n|\n(?:[A-Z])|$)'
         ]
         extract_section(skills_patterns, "Skills")
-        
+
         # Education section patterns
         education_patterns = [
             r'(?:^|\n)(?:education|academic|educational requirements|academic requirements|degree requirements|academic qualifications)(.*?)(?:\n\n|\n(?:[A-Z])|$)',
@@ -294,7 +306,7 @@ class JobDescriptionParser:
         ]
         # Try to extract education-specific content
         education_section = extract_section(education_patterns, "Education")
-        
+
         # If no specific education section, check if it's mentioned in requirements
         if not education_section:
             for section in sections:
@@ -324,14 +336,14 @@ class JobDescriptionParser:
                             for match in edu_matches:
                                 content = content.replace(match, '')
                             section["content"] = content.strip()
-        
+
         # Experience section patterns
         experience_patterns = [
             r'(?:^|\n)(?:experience|professional experience|work experience|years of experience|minimum experience)(.*?)(?:\n\n|\n(?:[A-Z])|$)',
             r'(?:^|\n)(?:\d+ years|at least \d+ years|minimum of \d+ years)(.*?)(?:\n\n|\n(?:[A-Z])|$)'
         ]
         experience_section = extract_section(experience_patterns, "Experience")
-        
+
         # If no specific experience section, check if it's prominently mentioned in requirements
         if not experience_section:
             for section in sections:
@@ -361,21 +373,21 @@ class JobDescriptionParser:
                             for match in exp_matches:
                                 content = content.replace(match, '')
                             section["content"] = content.strip()
-        
+
         # Benefits section patterns
         benefits_patterns = [
             r'(?:^|\n)(?:benefits|perks|what we offer|what\'s in it for you|you\'ll receive|we provide|our offering|compensation|what to expect)(.*?)(?:\n\n|\n(?:[A-Z])|$)',
             r'(?:^|\n)(?:our benefits|compensation and benefits|in return we offer|package includes|we offer|why work (?:for|with) us)(.*?)(?:\n\n|\n(?:[A-Z])|$)'
         ]
         extract_section(benefits_patterns, "Benefits")
-        
+
         # Additional Information section patterns
         additional_patterns = [
             r'(?:^|\n)(?:additional information|more information|to apply|application process|other information|notes)(.*?)(?:\n\n|\n(?:[A-Z])|$)',
             r'(?:^|\n)(?:about the process|how to apply|equal opportunity|diversity|inclusion|accessibility)(.*?)(?:\n\n|\n(?:[A-Z])|$)'
         ]
         extract_section(additional_patterns, "Additional Information")
-        
+
         # If no sections were found, create a generic one with the full text
         if not sections:
             print("  No sections extracted by heuristics, adding full description as 'Job Description'.")
@@ -396,18 +408,79 @@ class JobDescriptionParser:
     @staticmethod 
     def extract_company_info(company_name: str) -> Dict[str, Any]:
         """
-        Placeholder for extracting company information from external sources.
-        In a real implementation, this would query company databases or web APIs.
-        
+        Use LLM with agentic tooling to extract company information and structure it into appropriate fields.
         Args:
             company_name: The name of the company
-            
         Returns:
             Dictionary with company information
         """
+        if not GROQ_API_KEY:
+            print("No Groq API key found. Set the GROQ_API_KEY environment variable to use the LLM parser.")
+            return {
+                "name": company_name,
+                "description": "Company information would be fetched from external sources in a production implementation.",
+                "rating": None,
+                "review_count": 0,
+                "website": None,
+                "size": None,
+                "founded": None,
+                "headquarters": None,
+                "industry": None
+            }
+
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        prompt = f"""
+        You are an expert company research agent with access to agentic tools (web search, company databases, etc). 
+        Research the company named: '{company_name}'.
+        Extract and return the following fields in a JSON object. If a field is not available, set it to null or an empty value.
+        Fields:
+        - name: The official company name
+        - description: A concise overview of the company, its mission, and what it does
+        - rating: Company rating (e.g., from Glassdoor or similar, if available)
+        - review_count: Number of reviews (if available)
+        - website: Official website URL
+        - size: Company size (e.g., number of employees or size category)
+        - founded: Year founded
+        - headquarters: Headquarters location (city, country)
+        - industry: Main industry or sector
+        Respond ONLY with a JSON object with these fields, no extra commentary.
+        """
+        payload = {
+            "model": DEFAULT_MODEL,
+            "messages": [
+                {"role": "system", "content": "You are a helpful research assistant with access to agentic tools."},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.1,
+            "max_tokens": 800
+        }
+        try:
+            response = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=60)
+            if response.status_code == 200:
+                result = response.json()
+                content = result["choices"][0]["message"]["content"]
+                try:
+                    # Try to parse as JSON directly
+                    company_info = json.loads(content)
+                    return company_info
+                except json.JSONDecodeError:
+                    # Try to extract JSON from markdown code block
+                    json_match = re.search(r'```json\s*(.*?)\s*```', content, re.DOTALL)
+                    if json_match:
+                        with contextlib.suppress(json.JSONDecodeError):
+                            company_info = json.loads(json_match[1])
+                            return company_info
+            else:
+                print(f"Groq API error: {response.status_code}")
+        except Exception as e:
+            print(f"Error in extract_company_info: {str(e)}")
+        # Fallback if LLM fails
         return {
             "name": company_name,
-            "description": "Company information would be fetched from external sources in a production implementation.",
+            "description": "Company information could not be retrieved.",
             "rating": None,
             "review_count": 0,
             "website": None,
@@ -416,3 +489,68 @@ class JobDescriptionParser:
             "headquarters": None,
             "industry": None
         }
+
+    @staticmethod
+    def generate_cover_letter(job_description: str, cv_text: str, additional_docs: list = None) -> str:
+        """
+        Generate a personalized cover letter using the job description, CV, and additional documents.
+        """
+        # Improved error logging and validation
+        if not GROQ_API_KEY:
+            print("[ERROR] GROQ_API_KEY not set. Please set the GROQ_API_KEY environment variable.")
+            raise EnvironmentError("GROQ_API_KEY not set")
+        if not GROQ_API_URL or not GROQ_API_URL.startswith("https://api.groq.com/"):
+            print(f"[ERROR] GROQ_API_URL is invalid: {GROQ_API_URL}")
+            raise ValueError("GROQ_API_URL is invalid or missing.")
+        if not job_description or not cv_text:
+            print("[ERROR] job_description and cv_text are required to generate a cover letter.")
+            return "[Missing job description or CV text.]"
+        context = f"CV:\n{cv_text.strip()}\n"
+        if additional_docs := additional_docs or []:
+            context += "\n".join([f"Additional Document {i+1}:\n{doc.strip()}" for i, doc in enumerate(additional_docs)])
+        prompt = (
+            "You are an expert career assistant. Craft a professional, personalized cover letter "
+            "for the following job description, using the user's CV and any additional documents provided. "
+            "The letter should be tailored, concise, and impactful.\n"
+            "Job Description:\n" + job_description.strip() + "\n"
+            + context +
+            "Cover Letter:"
+        )
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": DEFAULT_MODEL,
+            "messages": [
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.2,
+            "max_tokens": 800
+        }
+        try:
+            response = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=60)
+            if response.status_code != 200:
+                try:
+                    error_detail = response.json().get("error", {}).get("message", "Unknown error")
+                except Exception:
+                    error_detail = response.text
+                print(f"[LLM API Error] Status: {response.status_code}, Detail: {error_detail}")
+                if response.status_code == 404:
+                    print(f"[ERROR] Endpoint not found: {GROQ_API_URL}. Please check the API URL.")
+                elif response.status_code in {401, 403}:
+                    print("[ERROR] Authentication error with Groq API. Please check your API key.")
+                elif response.status_code == 429:
+                    print("[ERROR] Rate limit exceeded for Groq API.")
+                return f"[LLM API Error: {response.status_code}] {error_detail}"
+            result = response.json()
+            try:
+                return result["choices"][0]["message"]["content"].strip()
+            except Exception as e:
+                print(f"[ERROR] Could not extract cover letter from LLM response: {e}")
+                print(f"[DEBUG] LLM raw response: {result}")
+                return "[Could not extract cover letter from LLM response.]"
+        except Exception as e:
+            print(f"[ERROR] Exception during LLM API call: {e}")
+            return f"[Exception during LLM API call: {e}]"

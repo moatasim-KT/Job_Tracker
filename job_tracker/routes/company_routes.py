@@ -10,9 +10,9 @@ from job_tracker.utils.company_parser import CompanyInfoParser
 from job_tracker.utils.url_discovery import URLDiscovery
 
 # Create blueprint
-company = Blueprint('company', __name__)
+company_bp = Blueprint('company', __name__)
 
-@company.route('/job/<int:job_id>/company', methods=['GET'])
+@company_bp.route('/job/<int:job_id>/company', methods=['GET'])
 def view_company_info(job_id):
     """Route to view company information for a specific job."""
     job = Job.query.get_or_404(job_id)
@@ -107,7 +107,7 @@ def view_company_info(job_id):
                           company_reviews=company_reviews,
                           company_source=company_source)
 
-@company.route('/job/<int:job_id>/company/update', methods=['POST'])
+@company_bp.route('/job/<int:job_id>/company/update', methods=['POST'])
 def update_company_info(job_id):
     """Route to update company information for a specific job."""
     job = Job.query.get_or_404(job_id)
@@ -203,7 +203,7 @@ def update_company_info(job_id):
     
     return redirect(url_for('company.view_company_info', job_id=job_id))
 
-@company.route('/job/<int:job_id>', methods=['GET'])
+@company_bp.route('/job/<int:job_id>', methods=['GET'])
 def api_get_company_info(job_id):
     """API endpoint to get company information for a specific job."""
     job = Job.query.get_or_404(job_id)
