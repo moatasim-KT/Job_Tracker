@@ -22,7 +22,4 @@ db = SQLAlchemy(app)
 # Remove all blueprint registration and route logic
 # Use the application factory in job_tracker/__init__.py instead
 
-if __name__ == '__main__':
-    from job_tracker import create_app
-    app = create_app()
-    app.run(host='0.0.0.0', port=5000, debug=False)
+# Removed redundant entry point. Use run.py to start the application.

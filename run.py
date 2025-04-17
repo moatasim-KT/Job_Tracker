@@ -3,7 +3,7 @@ import argparse
 
 # Setup command line arguments
 parser = argparse.ArgumentParser(description='Run the Job Tracker application')
-parser.add_argument('--port', type=int, default=5000, help='Port to run the server on')
+parser.add_argument('--port', type=int, default=5050, help='Port to run the server on')
 parser.add_argument('--host', type=str, default='0.0.0.0', help='Host to run the server on')
 args = parser.parse_args()
 
