@@ -1,3 +1,5 @@
+In progress
+
 # Job Tracker
 
 An automated application that helps track job applications by extracting information from LinkedIn job postings and web clippings.
